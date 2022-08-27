@@ -1,4 +1,4 @@
-# CGS4144_FinalProject
+# CGS4144_Team2
 Project for CGS 4144 Team 2
 
 Contributors:
