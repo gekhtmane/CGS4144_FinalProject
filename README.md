@@ -1,5 +1,5 @@
 # CGS4144_FinalProject
-Project for the class CGS 4144.
+Project for CGS 4144 Team 2
 Contributors:
 - Elizabeth Gekhtman
 - Grace Tholl
