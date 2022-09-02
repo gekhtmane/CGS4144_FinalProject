@@ -7,6 +7,6 @@ Contributors:
 - Chidiogo Onoh
 - Alex Chase
 
-Dataset evaluated: https://www.ncbi.nlm.nih.gov/sites/GDSbrowser?acc=GDS3017
+Dataset evaluated: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE209964 
 
-Question answered: Which therapy is most effective in treating the cervical cancer via cell-death?
+Question answered: Is it possible to detect the difference between ascites and primary ovarian tumors using RNA-sequencing?
