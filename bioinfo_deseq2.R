@@ -17,12 +17,15 @@ library(ggplot2)
 countData <- read.csv('C:/Users/chidi/Downloads/BioInfoFile1.3.csv', header = TRUE, sep = ",")
 head(countData)
 metaData <- read.csv('C:/Users/chidi/Downloads/SeriesMatrixPatIDSampType.csv', header = TRUE, sep = ",")
-metaData
-metaData
-dds <- DESeqDataSetFromMatrix(countData=x, 
-                              colData=metaData, 
-                              design=~dex, tidy = TRUE)
+
+dds <- DESeqDataSetFromMatrix(countData = countData,
+                              colData = metaData,
+                              design = ~ condition)
 dds
-dds <- DESeq(dds)
+##dds <- DESeqDataSetFromMatrix(countData=y, 
+##                              colData=metaData, 
+##                              design=~dex, tidy = TRUE)
+##dds
+##dds <- DESeq(dds)
 #res <- results(dds)
 #head(results(dds, tidy=TRUE))
