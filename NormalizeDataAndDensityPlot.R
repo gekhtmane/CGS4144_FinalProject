@@ -40,6 +40,11 @@ dds <- DESeq(dds)
 normalize_dds <- vst(dds)
 plotPCA(normalize_dds, intgroup = c("SourceName"))
 
+#t-sne plot using M3C package
+install.packages("M3C")
+library(M3C)
+tsne(geo_data,colvec=c('gold'))
+
 
 # Part 3
 # these next lines are from the Alex' Lemonade tutorial
