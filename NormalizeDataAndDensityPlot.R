@@ -31,17 +31,21 @@ all(rownames(col_data) == colnames(geo_data))
 geo_data <- geo_data[, rownames(col_data)]
 all(rownames(col_data) == colnames(geo_data)) #should now return true
 
+col_data$TissueType <- factor(col_data$TissueType)
 #Formats the data into a DESeqDataSet
 dds <- DESeqDataSetFromMatrix(countData = geo_data, colData = col_data,
-                              design = ~ SourceName)
+                              design =~ TissueType )
 dds <- DESeq(dds)
 
 # transform dataset to create PCA plot
 normalize_dds <- vst(dds)
-plotPCA(normalize_dds, intgroup = c("SourceName"))
+plotPCA(normalize_dds, intgroup = c("TissueType"))
 
 #t-sne plot using M3C package
-install.packages("M3C")
+if (!require("BiocManager", quietly = TRUE)){
+  install.packages("BiocManager")
+}
+BiocManager::install("M3C", force = TRUE)
 library(M3C)
 tsne(geo_data,colvec=c('gold'))
 
@@ -100,7 +104,7 @@ head(deseq_df)
 readr::write_tsv(
   deseq_df,
   file.path(
-    "C:/Users/emgek/Desktop/College/CGS 4144/assignment 2",
+    getwd(),
     "DiffExp.tsv" # Replace with a relevant output file name
   )
 )
