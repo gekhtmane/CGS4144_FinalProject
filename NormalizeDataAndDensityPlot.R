@@ -114,5 +114,47 @@ volcano_plot <- EnhancedVolcano::EnhancedVolcano(
   pCutoff = 0.01 # Loosen the cutoff since we supplied corrected p-values
 )
 volcano_plot
+
+# Part 5 - clustProfiler
+library(clusterProfiler)
+
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+
+BiocManager::install("org.Hs.eg.db")
+library(org.Hs.eg.db)
+
+ggo <- groupGO(gene     = deseq_df$Gene,
+               OrgDb    = org.Hs.eg.db,
+               ont      = "CC",
+               level    = 3,
+               readable = TRUE)
+head(ggo)
+
+# create a geneList that is geneName | log2foldchange
+geneList = deseq_df$log2FoldChange
+names(geneList) = as.character(deseq_df$Gene)
+
+geneList = sort(geneList, decreasing = TRUE)
+
+ego3 <- gseGO(geneList     = geneList,
+              OrgDb        = org.Hs.eg.db,
+              ont          = "CC",
+              minGSSize    = 100,
+              maxGSSize    = 60000,
+              pvalueCutoff = 0.05,
+              verbose      = FALSE)
+head(ego3)
+
+#save tsv file
+readr::write_tsv(
+  deseq_df,
+  file.path(
+    "C:/Users/emgek/Desktop/College/CGS 4144/assignment 2",
+    "ClustProfiler.tsv" # saves to personal directory
+  )
+)
+
+
 end()       
  
