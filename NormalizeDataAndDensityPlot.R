@@ -2,6 +2,16 @@
 # data environment before running this script
 library(readr)
 geo_data <- read.csv("BioInfoFile1.csv", header = TRUE)
+ensembl_ids <- geo_data[, 1]
+rownames(geo_data) = ensembl_ids
+
+# convert to Hugo
+library("org.Hs.eg.db")
+geneSymbols <- mapIds(org.Hs.eg.db, keys=ensembl_ids, column="SYMBOL", keytype="ENSEMBL", multiVals="first")
+gene_symbols= as.data.frame(as.matrix(geneSymbols))
+
+# store gene types for later use
+gene_types <- geo_data[, 9]
 
 geo_data <- geo_data[,-(1:9)]
 
@@ -36,5 +46,97 @@ dds <- DESeq(dds)
 normalize_dds <- vst(dds)
 plotPCA(normalize_dds, intgroup = c("TissueType"))
 
+#t-sne plot using M3C package
+install.packages("M3C")
+library(M3C)
+tsne(geo_data,colvec=c('gold'))
+
+
+# Part 3
+# these next lines are from the Alex' Lemonade tutorial
+if (!("DESeq2" %in% installed.packages())) {
+  # Install this package if it isn't installed yet
+  BiocManager::install("DESeq2", update = FALSE)
+}
+if (!("EnhancedVolcano" %in% installed.packages())) {
+  # Install this package if it isn't installed yet
+  BiocManager::install("EnhancedVolcano", update = FALSE)
+}
+if (!("apeglm" %in% installed.packages())) {
+  # Install this package if it isn't installed yet
+  BiocManager::install("apeglm", update = FALSE)
+}
+
+# Attach the DESeq2 library
+library(DESeq2)
+
+# Attach the ggplot2 library for plotting
+library(ggplot2)
+
+# We will need this so we can use the pipe: %>%
+library(magrittr)
+
+#set seed
+set.seed(12345)
+
+#metadata file is labelled col_data
+#actual data is labelled geo_data (expression_df)
+
+# NOTE: Deseq2 was already run on dds previously
+deseq_object <- dds
+deseq_results <- results(deseq_object)
+
+#possible replacement for lfcShrink() line in tutorial:
+res_lfc <- lfcShrink(deseq_object, coef=2, type="apeglm")
+head(res_lfc) #prints table
+
+# filtering/cleaning up using TidyVerse
+deseq_df <- res_lfc %>%
+  # make into data.frame
+  as.data.frame() %>%
+  # the gene names are row names -- let's make them a column for easy display
+  tibble::rownames_to_column("Gene") %>%
+  # add a column for significance threshold results
+  dplyr::mutate(threshold = padj < 0.05) %>%
+  # sort by statistic -- the highest values will be genes with
+  # higher expression in RPL10 mutated samples
+  dplyr::arrange(dplyr::desc(log2FoldChange))
+head(deseq_df)
+
+#save tsv file
+readr::write_tsv(
+  deseq_df,
+  file.path(
+    "DiffExp.tsv" # Replace with a relevant output file name
+  )
+)
+
+#volcano plot
+volcano_plot <- EnhancedVolcano::EnhancedVolcano(
+  deseq_df,
+  lab = deseq_df$Gene,
+  x = "log2FoldChange",
+  y = "padj",
+  pCutoff = 0.01 # Loosen the cutoff since we supplied corrected p-values
+)
+volcano_plot
+
+# Part 4
+BiocManager::install("ComplexHeatmap")
+library(ComplexHeatmap)
+
+# get statistically significant list of expressed genes from deseq_df
+sig_deseq <- deseq_df[deseq_df$pvalue < 0.01, ]
+
+# counts matrix
+dds_matrix <- counts(dds[rownames(dds) %in% sig_deseq$Gene])
+# get z score values of matrix
+z_matrix <- t(apply(dds_matrix, 1, scale))
+
+#FIXME: add better side panel
+Heatmap(z_matrix, cluster_rows = T, cluster_columns = T)
+
+# Part 5 - topGO
+BiocManager::install("topGO")
 end()     
  
