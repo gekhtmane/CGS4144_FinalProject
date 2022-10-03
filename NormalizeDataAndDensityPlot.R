@@ -151,14 +151,7 @@ ego3 <- gseGO(geneList     = geneList,
 head(ego3)
 
 #save tsv file
-readr::write_tsv(
-  deseq_df,
-  file.path(
-    "C:/Users/emgek/Desktop/College/CGS 4144/assignment 2",
-    "ClustProfiler.tsv" # saves to personal directory
-  )
-)
-
+write.table(ego3, file='ClustProfiler.tsv', quote=FALSE, sep='\t')
 
 end()       
  
