@@ -10,9 +10,6 @@ library("org.Hs.eg.db")
 geneSymbols <- mapIds(org.Hs.eg.db, keys=ensembl_ids, column="SYMBOL", keytype="ENSEMBL", multiVals="first")
 gene_symbols= as.data.frame(as.matrix(geneSymbols))
 
-# store gene types for later use
-gene_types <- geo_data[, 9]
-
 geo_data <- geo_data[,-(1:9)]
 
 #boxplot(log2(x+1))
@@ -126,15 +123,21 @@ BiocManager::install("ComplexHeatmap")
 library(ComplexHeatmap)
 
 # get statistically significant list of expressed genes from deseq_df
-sig_deseq <- deseq_df[deseq_df$pvalue < 0.01, ]
+sig_deseq <- deseq_df[deseq_df$pvalue < 0.001, ]
 
 # counts matrix
 dds_matrix <- counts(dds[rownames(dds) %in% sig_deseq$Gene])
 # get z score values of matrix
 z_matrix <- t(apply(dds_matrix, 1, scale))
 
-#FIXME: add better side panel
-Heatmap(z_matrix, cluster_rows = T, cluster_columns = T)
+#Heatmap of matrix, side map
+Heatmap(z_matrix, row_km = 5, 
+        col = colorRamp2(c(-2, 0, 2), c("green", "white", "red")),
+        show_column_names = FALSE, row_title = NULL, show_row_dend = FALSE)
+
+Heatmap(col_data$TissueType, name = "sample groupings",
+        top_annotation = HeatmapAnnotation(summary = anno_summary(height = unit(2, "cm"))),
+        width = unit(15, "mm"))
 
 # Part 5 - topGO
 BiocManager::install("topGO")
@@ -162,6 +165,7 @@ allGO2genes <- annFUN.org(
 
 GOdata <- new("topGOdata",
               ontology = "BP",
+              description = "Enrichment Analysis Data using topGO Methodology",
               allGenes = deseq_vector,
               annot = annFUN.GO2genes,
               GO2genes = allGO2genes,
@@ -182,6 +186,7 @@ results_table <- GenTable(GOdata, classicFisher = result_fisher,
 
 #save csv file
 write.table(results_table, file='topGO.csv', quote=FALSE, sep=',')
+
 
 BiocManager::install("Rgraphviz")
 # compare values - code based on topGO R vignette
