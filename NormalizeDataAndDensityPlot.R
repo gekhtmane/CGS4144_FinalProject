@@ -119,6 +119,80 @@ volcano_plot <- EnhancedVolcano::EnhancedVolcano(
 )
 volcano_plot
 
+# Part 4
+BiocManager::install("ComplexHeatmap")
+library(ComplexHeatmap)
+
+# get statistically significant list of expressed genes from deseq_df
+sig_deseq <- deseq_df[deseq_df$pvalue < 0.001, ]
+
+# counts matrix
+dds_matrix <- counts(dds[rownames(dds) %in% sig_deseq$Gene])
+# get z score values of matrix
+z_matrix <- t(apply(dds_matrix, 1, scale))
+
+#Heatmap of matrix, side map
+Heatmap(z_matrix, row_km = 5, 
+        col = colorRamp2(c(-2, 0, 2), c("green", "white", "red")),
+        show_column_names = FALSE, row_title = NULL, show_row_dend = FALSE)
+
+Heatmap(col_data$TissueType, name = "sample groupings",
+        top_annotation = HeatmapAnnotation(summary = anno_summary(height = unit(2, "cm"))),
+        width = unit(15, "mm"))
+
+# Part 5 - topGO
+BiocManager::install("topGO")
+library(topGO)
+
+# create named vector with genes and p values
+deseq_vector <- setNames(deseq_df$pvalue, deseq_df$Gene)
+deseq_vector <- deseq_vector[!is.na(deseq_vector)]
+
+# statistically significant vector
+sig_vector <- setNames(sig_deseq$pvalue, sig_deseq$Gene)
+
+# below code is taken from the topGO library documentation
+topDiffGenes <- function(pvalue) {
+  return(pvalue < 0.01)
+}
+gene_sel <- topDiffGenes(deseq_vector)
+
+# set annotation to specific db and gene ID
+allGO2genes <- annFUN.org(
+  whichOnto = "BP",
+  feasibleGenes = NULL,
+  mapping = "org.Hs.eg.db",
+  ID = "ensembl")
+
+GOdata <- new("topGOdata",
+              ontology = "BP",
+              description = "Enrichment Analysis Data using topGO Methodology",
+              allGenes = deseq_vector,
+              annot = annFUN.GO2genes,
+              GO2genes = allGO2genes,
+              geneSel = topDiffGenes)
+
+# now use GOdata to perform enrichment analysis 
+# run Fisher test
+result_fisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+
+# Kolmogorov-Smirnov
+result_KS_elim <- runTest(GOdata, algorithm = "elim", statistic = "ks")
+result_KS_classic <- runTest(GOdata, algorithm = "classic", statistic = "ks")
+
+results_table <- GenTable(GOdata, classicFisher = result_fisher,
+                          classicKS = result_KS_classic,
+                          elimKS = result_KS_elim, orderBy = "elimKS",
+                          ranksOf = "classicFisher", topNodes = 10)
+
+#save csv file
+write.table(results_table, file='topGO.csv', quote=FALSE, sep=',')
+
+
+BiocManager::install("Rgraphviz")
+# compare values - code based on topGO R vignette
+showSigOfNodes(GOdata, score(result_KS_elim), firstSigNodes = 5, useInfo = 'all')
+
 # Part 5 - clustProfiler
 library(clusterProfiler)
 
