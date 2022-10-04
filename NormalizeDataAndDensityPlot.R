@@ -153,5 +153,33 @@ head(ego3)
 #save tsv file
 write.table(ego3, file='ClustProfiler.tsv', quote=FALSE, sep='\t')
 
+
+# gprofiler2 - Disease Ontology
+# Disease Ontology using gprofiler2
+if (!("gprofiler2" %in% installed.packages())) {
+  # Install this package if it isn't installed yet
+  install.packages("gprofiler2", update = FALSE)
+}
+if (!("DOSE" %in% installed.packages())) {
+  # Install this package if it isn't installed yet
+  BiocManager::install("DOSE", update = FALSE)
+}
+
+library(gprofiler2)
+library(DOSE)
+
+#read the file
+genelist <- read.table(file = 'DiffExp.tsv', sep = '\t', header = TRUE)
+geneList = genelist[,3]
+names(geneList) = as.character(genelist[,1])
+geneList = sort(geneList, decreasing = TRUE)
+head(geneList)
+y <- gseDO(geneList,
+           minGSSize     = 120,
+           pvalueCutoff  = 0.2,
+           pAdjustMethod = "BH",
+           verbose       = FALSE)
+head(y)
+write.table(y, file='gp2DOenrichment.tsv', quote=FALSE, sep='\t')
 end()       
  
