@@ -138,5 +138,54 @@ Heatmap(z_matrix, cluster_rows = T, cluster_columns = T)
 
 # Part 5 - topGO
 BiocManager::install("topGO")
+library(topGO)
+
+# create named vector with genes and p values
+deseq_vector <- setNames(deseq_df$pvalue, deseq_df$Gene)
+deseq_vector <- deseq_vector[!is.na(deseq_vector)]
+
+# statistically significant vector
+sig_vector <- setNames(sig_deseq$pvalue, sig_deseq$Gene)
+
+# below code is taken from the topGO library documentation
+topDiffGenes <- function(pvalue) {
+  return(pvalue < 0.01)
+}
+gene_sel <- topDiffGenes(deseq_vector)
+
+# set annotation to specific db and gene ID
+allGO2genes <- annFUN.org(
+  whichOnto = "BP",
+  feasibleGenes = NULL,
+  mapping = "org.Hs.eg.db",
+  ID = "ensembl")
+
+GOdata <- new("topGOdata",
+              ontology = "BP",
+              allGenes = deseq_vector,
+              annot = annFUN.GO2genes,
+              GO2genes = allGO2genes,
+              geneSel = topDiffGenes)
+
+# now use GOdata to perform enrichment analysis 
+# run Fisher test
+result_fisher <- runTest(GOdata, algorithm = "classic", statistic = "fisher")
+
+# Kolmogorov-Smirnov
+result_KS_elim <- runTest(GOdata, algorithm = "elim", statistic = "ks")
+result_KS_classic <- runTest(GOdata, algorithm = "classic", statistic = "ks")
+
+results_table <- GenTable(GOdata, classicFisher = result_fisher,
+                          classicKS = result_KS_classic,
+                          elimKS = result_KS_elim, orderBy = "elimKS",
+                          ranksOf = "classicFisher", topNodes = 10)
+
+#save csv file
+write.table(results_table, file='topGO.csv', quote=FALSE, sep=',')
+
+BiocManager::install("Rgraphviz")
+# compare values - code based on topGO R vignette
+showSigOfNodes(GOdata, score(result_KS_elim), firstSigNodes = 5, useInfo = 'all')
+
 end()     
  
