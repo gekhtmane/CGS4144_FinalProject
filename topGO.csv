@@ -1,0 +1,11 @@
+GO.ID,Term,Annotated,Significant,Expected,Rank in classicFisher,classicFisher,classicKS,elimKS
+1,GO:0006954,inflammatory response,788,333,278.99,195,1.8e-05,1.6e-08,6.6e-06
+2,GO:0035633,maintenance of blood-brain barrier,34,25,12.04,153,5.4e-06,6.8e-06,6.8e-06
+3,GO:0033627,cell adhesion mediated by integrin,85,52,30.09,92,7.9e-07,1.2e-06,7.5e-06
+4,GO:0097193,intrinsic apoptotic signaling pathway,289,137,102.32,169,9.0e-06,9.4e-06,2.2e-05
+5,GO:0006886,intracellular protein transport,832,348,294.57,197,2.0e-05,3.6e-05,3.6e-05
+6,GO:0007160,cell-matrix adhesion,230,104,81.43,399,0.00087,4.0e-05,4.0e-05
+7,GO:0009888,tissue development,1890,776,669.15,50,1.5e-08,4.7e-10,4.3e-05
+8,GO:0006464,cellular protein modification process,3566,1389,1262.53,68,1.4e-07,2.5e-11,5.1e-05
+9,GO:0030335,positive regulation of cell migration,541,241,191.54,130,2.8e-06,1.3e-06,6.6e-05
+10,GO:0080135,regulation of cellular response to stres...,645,271,228.36,273,0.00013,1.8e-05,6.6e-05
