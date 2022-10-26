@@ -7,7 +7,6 @@ library(dplyr)
 gene_data <- data.frame(read.csv("BioInfoFile1.csv", row.names = 1, header = TRUE))
 col_data <- data.frame(read.csv("SeriesMatrixPatIDSampType.csv", header=TRUE))
 geo_data <- gene_data[,-(1:8)]
-scaled_data <- scale(geo_data)
 
 # transpose the matrix to match it with the counts data for DESeq2
 col_data <- t(col_data)
@@ -21,11 +20,6 @@ geo_data <- t(geo_data)
 tokeep <- c(rownames(col_data))
 geo_data <- geo_data[rownames(geo_data) %in% tokeep,]
 geo_data <- t(geo_data)
-
-
-
-alluvial_data <- read.csv("BioInfoFile1.csv", header = TRUE)
-alluvial_data <- alluvial_data[,-(2:9)]
 
 log_data <- log2(geo_data + 1)
 
@@ -98,23 +92,36 @@ head(deseq_df)
 
 # Now we filter
 
-# make the first row of col_data a header
+# Order data
 geo_data <- geo_data[deseq_df$Gene,]
-scaled_data <- scaled_data[deseq_df$Gene,]
+log_data <- log_data[deseq_df$Gene,]
 
+# For 5000 genes
 TopGenes <- geo_data[1:5000,]
-TopScale <- scaled_data[1:5000,]
+TopScale <- log_data[1:5000,]
+TopGenes <- t(TopGenes)
+TopScale <- t(TopScale)
+
 # Graphing time
 library(factoextra)
 set.seed(123)
-km.res <- kmeans(TopScale, 10, nstart = 25)
-
+km.res <- kmeans(TopScale, 2, nstart = 25)
+fviz_nbclust(TopScale, kmeans, method = "silhouette")
 # Visualize kmeans clustering
 fviz_cluster(km.res,TopGenes, ellipse.type = "norm", geom = c("point"), main = "5000 Genes")
-#After that we run our k-means clustering and graph it
-sort(table(km.res$cluster))
-km.res$cluster
+alluvial_data <- data.frame(km.res$cluster)
+# make list for numbers of genes
+nums <- list(10, 100, 1000, 10000)
+set.seed(123)
+for(x in nums){
+  TopGenes <- geo_data[1:x,]
+  TopScale <- log_data[1:x,]
+  TopGenes <- t(TopGenes)
+  TopScale <- t(TopScale)
+  km.res <- kmeans(TopScale, 2, nstart = 25)
 
+  alluvial_data$x <- km.res$cluster
+}
 #Alluvial Plot
 library(ggalluvial)
 head(as.data.frame(TopGenes))
