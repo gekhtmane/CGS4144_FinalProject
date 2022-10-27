@@ -102,6 +102,128 @@ TopScale <- log_data[1:5000,]
 TopGenes <- t(TopGenes)
 TopScale <- t(TopScale)
 
+#PAM PART
+#PAM time!
+install.packages(c("cluster", "factoextra"))
+library(cluster)
+library(factoextra)
+
+FiveThousandPam <- pam(TopFiveThousandGenes, 2)
+plot(FiveThousandPam)
+
+
+#PAM Clustering: 10 genes
+TopTenGenes <- geo_data[1:10,]
+TopTenScale <- scaled_data[1:10,]
+TenPam <- pam(TopTenGenes, 2)
+plot(TenPam) #doesn't run, too few genes
+
+
+#PAM Clustering: 100 genes
+TopHundredGenes <- geo_data[1:100,]
+TopHundredScale <- scaled_data[1:100,]
+HundredPam <- pam(TopHundredGenes, 2)
+plot(HundredPam) #doesn't run, too few genes
+
+
+#PAM Clustering: 1000 genes
+TopThousandGenes <- geo_data[1:1000,]
+TopThousandScale <- scaled_data[1:1000,]
+ThousandPam <- pam(TopThousandGenes, 2)
+plot(ThousandPam)
+
+
+#PAM Clustering: 10000 genes
+TopTenThousandGenes <- geo_data[1:10000,]
+TopTenThousandScale <- scaled_data[1:10000,]
+TenThousandPam <- pam(TopTenThousandGenes, 2)
+plot(TenThousandPam)
+
+
+#PAM alluvial plot
+install.packages("ggalluvial")
+library("ggalluvial")
+
+#make a new dataframe with table of all of the PAM clustering results:
+#making columns for our data frame
+col10primary = table(TenPam$clustering)[[1]]
+col10ascites = table(TenPam$clustering)[[2]]
+col100primary = table(HundredPam$clustering)[[1]]
+col100ascites = table(HundredPam$clustering)[[2]]
+col1000primary = table(ThousandPam$clustering)[[1]]
+col1000ascites = table(ThousandPam$clustering)[[2]]
+col5000primary = table(FiveThousandPam$clustering)[[1]]
+col5000ascites = table(FiveThousandPam$clustering)[[2]]
+col10000primary = table(TenThousandPam$clustering)[[1]]
+col10000ascites = table(TenThousandPam$clustering)[[2]]
+
+levels(col_data$TissueType)
+
+#redo
+pamResults <- data.frame(
+  c(col10ascites, col10primary),
+  c(col100ascites, col100primary),
+  c(col1000ascites, col1000primary),
+  c(col5000ascites, col5000primary),
+  c(col10000ascites, col10000primary),
+  levels(col_data$TissueType)
+)
+pamResults
+
+#make the column names nicer:
+names(pamResults)[1] <- "10 Genes"
+names(pamResults)[2] <- "100 Genes"
+names(pamResults)[3] <- "1000 Genes"
+names(pamResults)[4] <- "5000 Genes"
+names(pamResults)[5] <- "10000 Genes"
+names(pamResults)[6] <- "Tissue Type"
+
+
+# video tutorial alluvial plot:
+alluvial <- pamResults %>%
+  group_by("10 Genes", "100 Genes", "1000 Genes", "5000 Genes", "10000 Genes") %>%
+  #summarise(obs = n()) %>%
+  ggplot(aes(y = "Tissue Type", axis1 = "10 Genes", axis2 = "100 Genes", axis3 = "1000 Genes", axis4 = "5000 Genes", axis5 = "10000 Genes")) +
+  geom_alluvium(aes(fill = "10 Genes"), width = 0,
+                knot.pos = 0, reverse = FALSE) +
+  geom_stratum(width = 1/12, reverse = FALSE) +
+  geom_label(stat = "stratum",
+             aes(label = after_stat(stratum), vjust=-3)) +
+  scale_x_discrete(limits = c("10 Genes", "100 Genes", "1000 Genes", "5000 Genes", "10000 Genes"),
+                   expand = c(0.05, 0.05)) +
+  scale_fill_brewer(type = "qual", palette = "Set1") +
+  ggtitle("Alluvial PAM Plot")
+alluvial
+
+
+#PAM Chi-Square Test
+#look at 5000 genes instead of the 110 participants
+percAscites = 29/110
+percPrimary = 81/110
+propAscites = percAscites * 5000
+propPrimary = percPrimary * 5000
+table(FiveThousandPam$clustering)[[1]]
+table(FiveThousandPam$clustering)[[2]]
+
+chisq_df <- data.frame(
+  c(propPrimary, propAscites),
+  c(table(FiveThousandPam$clustering)[[1]], table(FiveThousandPam$clustering)[[2]])
+)
+chisq_df
+
+#make the column names nicer:
+names(chisq_df)[1] <- "Expected"
+names(chisq_df)[2] <- "PAMClustering"
+
+#make the row names nicer:
+rownames(chisq_df) <- c("Primary","Ascites")
+
+chisq.test(chisq_df$Expected, chisq_df$PamClustering, correct=FALSE)
+
+
+
+
+
 # Graphing time
 library(factoextra)
 set.seed(123)
