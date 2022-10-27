@@ -145,6 +145,7 @@ install.packages("ggalluvial")
 library("ggalluvial")
 
 #make a new dataframe with table of all of the PAM clustering results:
+
 #making columns for our data frame
 col10primary = table(TenPam$clustering)[[1]]
 col10ascites = table(TenPam$clustering)[[2]]
@@ -179,7 +180,54 @@ names(pamResults)[5] <- "10000 Genes"
 names(pamResults)[6] <- "Tissue Type"
 
 
-# video tutorial alluvial plot:
+
+#alex updated alluvial plot code:
+alluvial_data <- pamResults
+topaste <- paste0(5000, "Genes")
+alluvial_data <- alluvial_data %>% rename("km.res.cluster" = topaste)
+# make list for numbers of genes
+nums <- list(10, 100, 1000, 10000)
+set.seed(123)
+for(x in nums){
+  TopGenes <- geo_data[1:x,]
+  TopScale <- log_data[1:x,]
+  TopGenes <- t(TopGenes)
+  TopScale <- t(TopScale)
+  km.res <- kmeans(TopScale, 2, nstart = 25)
+  new <- km.res$cluster
+  new <- data.frame(new)
+  alluvial_data <- cbind(alluvial_data, new)
+  topaste <- paste0(x, "Genes")
+  alluvial_data <- alluvial_data %>% rename("new" = topaste)
+}
+
+
+
+is_alluvia_form(as.data.frame(pamResults), axes = 1:2, silent = TRUE) #should return true
+
+ggplot(as.data.frame(pamResults),
+       aes(y = 110, axis1 = Gender, axis2 = Dept)) +
+  geom_alluvium(aes(fill = Admit), width = 1/12) +
+  geom_stratum(width = 1/12, fill = "black", color = "grey") +
+  geom_label(stat = "stratum", aes(label = after_stat(stratum))) +
+  scale_x_discrete(limits = c("Gender", "Dept"), expand = c(.05, .05)) +
+  scale_fill_brewer(type = "qual", palette = "Set1") +
+  ggtitle("UC Berkeley admissions and rejections, by sex and department")
+
+#redo:
+#gg plot
+ggplot(as.data.frame(pamResults),
+       aes( y = 110, axis1 = '10Genes', axis2 = '100Genes', axis3 = '1000Genes', axis4 = '5000Genes', axis5 = '10000Genes')) +
+  geom_alluvium(aes(fill = levels.col_data.TissueType) +
+  geom_stratum(aes(), width = 1/12, fill = "black", color = "grey") +
+  geom_label(stat = "stratum", aes(label = after_stat(stratum))) +
+  scale_x_discrete(limits = c("10Genes", "100Genes", "1000Genes", "5000Genes", "10000Genes"), expand = c(.05, .05)) +
+  scale_fill_brewer(type = "qual", palette = "Set2") +
+  ggtitle("Gene Cluster Membership")
+)
+
+
+# video tutorial:
 alluvial <- pamResults %>%
   group_by("10 Genes", "100 Genes", "1000 Genes", "5000 Genes", "10000 Genes") %>%
   #summarise(obs = n()) %>%
@@ -218,7 +266,10 @@ names(chisq_df)[2] <- "PAMClustering"
 #make the row names nicer:
 rownames(chisq_df) <- c("Primary","Ascites")
 
+#adj p-val from chi-square test (2.2e-16)
 chisq.test(chisq_df$Expected, chisq_df$PamClustering, correct=FALSE)
+p.adjust(2.2e-16, method="BH")
+#/end PAM time
 
 
 
