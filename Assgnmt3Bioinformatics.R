@@ -161,3 +161,6 @@ ggplot(as.data.frame(as.data.frame(TopGenes)),
   scale_fill_brewer(type = "qual", palette = "Set1") +
   ggtitle("Gene Cluster Membership")
 
+chisq.test(hclust$order, hclust$order, correct=FALSE)
+p.adjust(.02392, method="BH")
+
