@@ -102,178 +102,10 @@ TopScale <- log_data[1:5000,]
 TopGenes <- t(TopGenes)
 TopScale <- t(TopScale)
 
-#PAM PART
-#PAM time!
-install.packages(c("cluster", "factoextra"))
-library(cluster)
-library(factoextra)
-
-FiveThousandPam <- pam(TopFiveThousandGenes, 2)
-plot(FiveThousandPam)
-
-
-#PAM Clustering: 10 genes
-TopTenGenes <- geo_data[1:10,]
-TopTenScale <- scaled_data[1:10,]
-TenPam <- pam(TopTenGenes, 2)
-plot(TenPam) #doesn't run, too few genes
-
-
-#PAM Clustering: 100 genes
-TopHundredGenes <- geo_data[1:100,]
-TopHundredScale <- scaled_data[1:100,]
-HundredPam <- pam(TopHundredGenes, 2)
-plot(HundredPam) #doesn't run, too few genes
-
-
-#PAM Clustering: 1000 genes
-TopThousandGenes <- geo_data[1:1000,]
-TopThousandScale <- scaled_data[1:1000,]
-ThousandPam <- pam(TopThousandGenes, 2)
-plot(ThousandPam)
-
-
-#PAM Clustering: 10000 genes
-TopTenThousandGenes <- geo_data[1:10000,]
-TopTenThousandScale <- scaled_data[1:10000,]
-TenThousandPam <- pam(TopTenThousandGenes, 2)
-plot(TenThousandPam)
-
-
-#PAM alluvial plot
-install.packages("ggalluvial")
-library("ggalluvial")
-
-#make a new dataframe with table of all of the PAM clustering results:
-
-#making columns for our data frame
-col10primary = table(TenPam$clustering)[[1]]
-col10ascites = table(TenPam$clustering)[[2]]
-col100primary = table(HundredPam$clustering)[[1]]
-col100ascites = table(HundredPam$clustering)[[2]]
-col1000primary = table(ThousandPam$clustering)[[1]]
-col1000ascites = table(ThousandPam$clustering)[[2]]
-col5000primary = table(FiveThousandPam$clustering)[[1]]
-col5000ascites = table(FiveThousandPam$clustering)[[2]]
-col10000primary = table(TenThousandPam$clustering)[[1]]
-col10000ascites = table(TenThousandPam$clustering)[[2]]
-
-levels(col_data$TissueType)
-
-#redo
-pamResults <- data.frame(
-  c(col10ascites, col10primary),
-  c(col100ascites, col100primary),
-  c(col1000ascites, col1000primary),
-  c(col5000ascites, col5000primary),
-  c(col10000ascites, col10000primary),
-  levels(col_data$TissueType)
-)
-pamResults
-
-#make the column names nicer:
-names(pamResults)[1] <- "10 Genes"
-names(pamResults)[2] <- "100 Genes"
-names(pamResults)[3] <- "1000 Genes"
-names(pamResults)[4] <- "5000 Genes"
-names(pamResults)[5] <- "10000 Genes"
-names(pamResults)[6] <- "Tissue Type"
-
-
-
-#alex updated alluvial plot code:
-alluvial_data <- pamResults
-topaste <- paste0(5000, "Genes")
-alluvial_data <- alluvial_data %>% rename("km.res.cluster" = topaste)
-# make list for numbers of genes
-nums <- list(10, 100, 1000, 10000)
-set.seed(123)
-for(x in nums){
-  TopGenes <- geo_data[1:x,]
-  TopScale <- log_data[1:x,]
-  TopGenes <- t(TopGenes)
-  TopScale <- t(TopScale)
-  km.res <- kmeans(TopScale, 2, nstart = 25)
-  new <- km.res$cluster
-  new <- data.frame(new)
-  alluvial_data <- cbind(alluvial_data, new)
-  topaste <- paste0(x, "Genes")
-  alluvial_data <- alluvial_data %>% rename("new" = topaste)
-}
-
-
-
-is_alluvia_form(as.data.frame(pamResults), axes = 1:2, silent = TRUE) #should return true
-
-ggplot(as.data.frame(pamResults),
-       aes(y = 110, axis1 = Gender, axis2 = Dept)) +
-  geom_alluvium(aes(fill = Admit), width = 1/12) +
-  geom_stratum(width = 1/12, fill = "black", color = "grey") +
-  geom_label(stat = "stratum", aes(label = after_stat(stratum))) +
-  scale_x_discrete(limits = c("Gender", "Dept"), expand = c(.05, .05)) +
-  scale_fill_brewer(type = "qual", palette = "Set1") +
-  ggtitle("UC Berkeley admissions and rejections, by sex and department")
-
-#redo:
-#gg plot
-ggplot(as.data.frame(pamResults),
-       aes( y = 110, axis1 = '10Genes', axis2 = '100Genes', axis3 = '1000Genes', axis4 = '5000Genes', axis5 = '10000Genes')) +
-  geom_alluvium(aes(fill = levels.col_data.TissueType) +
-  geom_stratum(aes(), width = 1/12, fill = "black", color = "grey") +
-  geom_label(stat = "stratum", aes(label = after_stat(stratum))) +
-  scale_x_discrete(limits = c("10Genes", "100Genes", "1000Genes", "5000Genes", "10000Genes"), expand = c(.05, .05)) +
-  scale_fill_brewer(type = "qual", palette = "Set2") +
-  ggtitle("Gene Cluster Membership")
-)
-
-
-# video tutorial:
-alluvial <- pamResults %>%
-  group_by("10 Genes", "100 Genes", "1000 Genes", "5000 Genes", "10000 Genes") %>%
-  #summarise(obs = n()) %>%
-  ggplot(aes(y = "Tissue Type", axis1 = "10 Genes", axis2 = "100 Genes", axis3 = "1000 Genes", axis4 = "5000 Genes", axis5 = "10000 Genes")) +
-  geom_alluvium(aes(fill = "10 Genes"), width = 0,
-                knot.pos = 0, reverse = FALSE) +
-  geom_stratum(width = 1/12, reverse = FALSE) +
-  geom_label(stat = "stratum",
-             aes(label = after_stat(stratum), vjust=-3)) +
-  scale_x_discrete(limits = c("10 Genes", "100 Genes", "1000 Genes", "5000 Genes", "10000 Genes"),
-                   expand = c(0.05, 0.05)) +
-  scale_fill_brewer(type = "qual", palette = "Set1") +
-  ggtitle("Alluvial PAM Plot")
-alluvial
-
-
-#PAM Chi-Square Test
-#look at 5000 genes instead of the 110 participants
-percAscites = 29/110
-percPrimary = 81/110
-propAscites = percAscites * 5000
-propPrimary = percPrimary * 5000
-table(FiveThousandPam$clustering)[[1]]
-table(FiveThousandPam$clustering)[[2]]
-
-chisq_df <- data.frame(
-  c(propPrimary, propAscites),
-  c(table(FiveThousandPam$clustering)[[1]], table(FiveThousandPam$clustering)[[2]])
-)
-chisq_df
-
-#make the column names nicer:
-names(chisq_df)[1] <- "Expected"
-names(chisq_df)[2] <- "PAMClustering"
-
-#make the row names nicer:
-rownames(chisq_df) <- c("Primary","Ascites")
-
-#adj p-val from chi-square test (2.2e-16)
-chisq.test(chisq_df$Expected, chisq_df$PamClustering, correct=FALSE)
-p.adjust(2.2e-16, method="BH")
-#/end PAM time
-
-
-
-
+Top5000Genes <- geo_data[1:5000,]
+Top5000Scale <- log_data[1:5000,]
+Top5000Genes <- t(Top5000Genes)
+Top5000Scale <- t(Top5000Scale)
 
 # Graphing time
 library(factoextra)
@@ -282,31 +114,121 @@ km.res <- kmeans(TopScale, 2, nstart = 25)
 fviz_nbclust(TopScale, kmeans, method = "silhouette")
 # Visualize kmeans clustering
 fviz_cluster(km.res,TopGenes, ellipse.type = "norm", geom = c("point"), main = "5000 Genes")
+
 alluvial_data <- data.frame(km.res$cluster)
+alluvial_data <- alluvial_data %>% rename('5000Genes' = 'km.res.cluster')
 # make list for numbers of genes
-nums <- list(10, 100, 1000, 10000)
-set.seed(123)
-for(x in nums){
-  TopGenes <- geo_data[1:x,]
-  TopScale <- log_data[1:x,]
+# 10 genes
+  set.seed(123)
+  TopGenes <- geo_data[1:10,]
+  TopScale <- log_data[1:10,]
   TopGenes <- t(TopGenes)
   TopScale <- t(TopScale)
   km.res <- kmeans(TopScale, 2, nstart = 25)
-
-  alluvial_data$x <- km.res$cluster
-}
+  new <- km.res$cluster
+  new <- data.frame(new)
+  alluvial_data <- cbind(alluvial_data, new)
+  alluvial_data <- alluvial_data %>% rename('10Genes' = new)
+  fviz_cluster(km.res,TopGenes, ellipse.type = "norm", geom = c("point"), main ='10Genes')
+  
+# 100 genes
+  set.seed(123)
+  TopGenes <- geo_data[1:100,]
+  TopScale <- log_data[1:100,]
+  TopGenes <- t(TopGenes)
+  TopScale <- t(TopScale)
+  km.res <- kmeans(TopScale, 2, nstart = 25)
+  new <- km.res$cluster
+  new <- data.frame(new)
+  alluvial_data <- cbind(alluvial_data, new)
+  alluvial_data <- alluvial_data %>% rename('100Genes' = new)
+  fviz_cluster(km.res,TopGenes, ellipse.type = "norm", geom = c("point"), main ='100Genes')
+  
+# 1000 genes
+  set.seed(123)
+  TopGenes <- geo_data[1:1000,]
+  TopScale <- log_data[1:1000,]
+  TopGenes <- t(TopGenes)
+  TopScale <- t(TopScale)
+  km.res <- kmeans(TopScale, 2, nstart = 25)
+  new <- km.res$cluster
+  new <- data.frame(new)
+  alluvial_data <- cbind(alluvial_data, new)
+  alluvial_data <- alluvial_data %>% rename('1000Genes' = new)
+  fviz_cluster(km.res,TopGenes, ellipse.type = "norm", geom = c("point"), main ='1000Genes')
+  
+# 10000 genes
+  set.seed(123)
+  TopGenes <- geo_data[1:10000,]
+  TopScale <- log_data[1:10000,]
+  TopGenes <- t(TopGenes)
+  TopScale <- t(TopScale)
+  km.res <- kmeans(TopScale, 2, nstart = 25)
+  new <- km.res$cluster
+  new <- data.frame(new)
+  alluvial_data <- cbind(alluvial_data, new)
+  alluvial_data <- alluvial_data %>% rename('10000Genes' = new)
+  fviz_cluster(km.res,TopGenes, ellipse.type = "norm", geom = c("point"), main ='10000Genes')
+  
+  
 #Alluvial Plot
 library(ggalluvial)
-head(as.data.frame(TopGenes))
-head(as.data.frame(col_data))
 
-TopGenes$GeneID <- row.names(TopGenes)
-TopGenes$Cluster <- km.res$cluster
+new <- data.frame(col_data$TissueType)
+alluvial_data <- cbind(alluvial_data, new)
+alluvial_data <- alluvial_data %>% rename("TissueType" = "col_data.TissueType")
 
-ggplot(as.data.frame(as.data.frame(TopGenes)),
-       aes( axis1 = GeneID, axis2 = Cluster)) +
-  geom_alluvium(aes(fill = Admit), width = 1/12) +
-  geom_stratum(width = 1/12, fill = "black", color = "grey") +
+is_alluvia_form(as.data.frame(alluvial_data), axes = 1:5, silent = TRUE)
+head(as.data.frame(alluvial_data))
+#  geom_alluvium(aes(fill = TissueType), width = 1/12) +
+
+#gg plot
+ggplot(as.data.frame(alluvial_data),
+       aes( y = 110, axis1 = '10Genes', axis2 = '100Genes', axis3 = '1000Genes', axis4 = '10000Genes')) +
+  geom_alluvium(aes(fill = TissueType)) +
+  geom_stratum(aes(), width = 1/12, fill = "black", color = "grey") +
   geom_label(stat = "stratum", aes(label = after_stat(stratum))) +
-  scale_fill_brewer(type = "qual", palette = "Set1") +
+  scale_x_discrete(limits = c("10Genes", "100Genes", "1000Genes", "10000Genes"), expand = c(.05, .05)) +
+  scale_fill_brewer(type = "qual", palette = "Set2") +
   ggtitle("Gene Cluster Membership")
+
+
+
+
+# Heatmap 5000 genes
+library(ComplexHeatmap)
+library(circlize)
+# get statistically significant list of expressed genes from deseq_df
+sig_deseq <- deseq_df[deseq_df$pvalue < 0.001, ]
+
+# counts matrix
+dds_matrix <- counts(dds[rownames(dds) %in% sig_deseq$Gene])
+
+# get z score values of matrix
+z_matrix <- t(apply(dds_matrix, 1, scale))
+
+#Heatmap of matrix, side map
+Heatmap(z_matrix, row_km = 5, 
+        col = colorRamp2(c(-2, 0, 2), c("green", "white", "red")),
+        show_column_names = FALSE, row_title = NULL, show_row_dend = FALSE)
+
+Heatmap(col_data$TissueType, name = "sample groupings",
+        top_annotation = HeatmapAnnotation(summary = anno_summary(height = unit(2, "cm"))),
+        width = unit(15, "mm"))
+
+#Chi-Squared Test
+chisq.test(alluvial_data$`5000Genes`, col_data$TissueType, correct=FALSE)
+chisq.test(alluvial_data$`10Genes`, alluvial_data$`100Genes`, correct=FALSE)
+chisq.test(alluvial_data$`10Genes`, alluvial_data$`1000Genes`, correct=FALSE)
+chisq.test(alluvial_data$`10Genes`, alluvial_data$`10000Genes`, correct=FALSE)
+chisq.test(alluvial_data$`100Genes`, alluvial_data$`1000Genes`, correct=FALSE)
+chisq.test(alluvial_data$`100Genes`, alluvial_data$`10000Genes`, correct=FALSE)
+chisq.test(alluvial_data$`1000Genes`, alluvial_data$`10000Genes`, correct=FALSE)
+chi <- c(102.27, 88.315, 55.495, 94.988, 59.688, 69.122)
+pval <- c(2.2e-16, 2.2e-16, 9.367e-14, 2.2e-16, 1.111e-14, 2.2e-16)
+p.adjust(pval,method = "BH")
+padj <- c(3.3000e-16, 3.3000e-16, 9.3670e-14, 3.3000e-16, 1.3332e-14, 3.3000e-16)
+chisqrtbl <- data.frame(chi)
+chisqrtbl <- cbind(pval)
+chisqrtbl <- data.frame(chi)
+
