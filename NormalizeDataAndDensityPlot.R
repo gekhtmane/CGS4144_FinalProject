@@ -134,7 +134,7 @@ z_matrix <- t(apply(dds_matrix, 1, scale))
 #Heatmap of matrix, side map
 Heatmap(z_matrix, row_km = 5, 
         col = colorRamp2(c(-2, 0, 2), c("green", "white", "red")),
-        show_column_names = FALSE, row_title = NULL, show_row_dend = FALSE)
+        show_column_names = FALSE, row_title = NULL, show_row_dend = TRUE, show_row_names = FALSE)
 
 Heatmap(col_data$TissueType, name = "sample groupings",
         top_annotation = HeatmapAnnotation(summary = anno_summary(height = unit(2, "cm"))),
