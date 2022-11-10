@@ -116,7 +116,17 @@ fviz_nbclust(TopScale, kmeans, method = "silhouette")
 fviz_cluster(km.res,TopGenes, ellipse.type = "norm", geom = c("point"), main = "5000 Genes")
 
 alluvial_data <- data.frame(km.res$cluster)
-alluvial_data <- alluvial_data %>% rename('5000Genes' = 'km.res.cluster')
+alluvial_data <- alluvial_data %>% rename('km.res.cluster' = '5000Genes')
+
+TissueType <- c("PrimaryTumour", "Ascites")
+Freq <- c(81,29)
+Test <- c("ActualCount", "ActualCount")
+a_data <- data.frame(TissueType, Test, Freq)
+
+TissueType <- c("PrimaryTumour", "Ascites")
+Freq <- c(km.res$size[1],km.res$size[2])
+Test <- c("5000Genes", "5000Genes")
+a_data <- rbind(a_data, data.frame(TissueType, Test, Freq))
 # make list for numbers of genes
 # 10 genes
   set.seed(123)
@@ -128,7 +138,11 @@ alluvial_data <- alluvial_data %>% rename('5000Genes' = 'km.res.cluster')
   new <- km.res$cluster
   new <- data.frame(new)
   alluvial_data <- cbind(alluvial_data, new)
-  alluvial_data <- alluvial_data %>% rename('10Genes' = new)
+  alluvial_data <- alluvial_data %>% rename(new = '10Genes')
+  TissueType <- c("PrimaryTumour", "Ascites")
+  Freq <- c(km.res$size[1],km.res$size[2])
+  Test <- c("10Genes", "10Genes")
+  a_data <- rbind(a_data, data.frame(TissueType, Test, Freq))
   fviz_cluster(km.res,TopGenes, ellipse.type = "norm", geom = c("point"), main ='10Genes')
   
 # 100 genes
@@ -141,7 +155,11 @@ alluvial_data <- alluvial_data %>% rename('5000Genes' = 'km.res.cluster')
   new <- km.res$cluster
   new <- data.frame(new)
   alluvial_data <- cbind(alluvial_data, new)
-  alluvial_data <- alluvial_data %>% rename('100Genes' = new)
+  alluvial_data <- alluvial_data %>% rename(new = '100Genes')
+  TissueType <- c("PrimaryTumour", "Ascites")
+  Freq <- c(km.res$size[1],km.res$size[2])
+  Test <- c("100Genes", "100Genes")
+  a_data <- rbind(a_data, data.frame(TissueType, Test, Freq))
   fviz_cluster(km.res,TopGenes, ellipse.type = "norm", geom = c("point"), main ='100Genes')
   
 # 1000 genes
@@ -154,7 +172,11 @@ alluvial_data <- alluvial_data %>% rename('5000Genes' = 'km.res.cluster')
   new <- km.res$cluster
   new <- data.frame(new)
   alluvial_data <- cbind(alluvial_data, new)
-  alluvial_data <- alluvial_data %>% rename('1000Genes' = new)
+  alluvial_data <- alluvial_data %>% rename(new = '1000Genes')
+  TissueType <- c("PrimaryTumour", "Ascites")
+  Freq <- c(km.res$size[1],km.res$size[2])
+  Test <- c("1000Genes", "1000Genes")
+  a_data <- rbind(a_data, data.frame(TissueType, Test, Freq))
   fviz_cluster(km.res,TopGenes, ellipse.type = "norm", geom = c("point"), main ='1000Genes')
   
 # 10000 genes
@@ -167,31 +189,37 @@ alluvial_data <- alluvial_data %>% rename('5000Genes' = 'km.res.cluster')
   new <- km.res$cluster
   new <- data.frame(new)
   alluvial_data <- cbind(alluvial_data, new)
-  alluvial_data <- alluvial_data %>% rename('10000Genes' = new)
+  alluvial_data <- alluvial_data %>% rename(new = '10000Genes')
+  TissueType <- c("PrimaryTumour", "Ascites")
+  Freq <- c(km.res$size[1],km.res$size[2])
+  Test <- c("10000Genes", "10000Genes")
+  a_data <- rbind(a_data, data.frame(TissueType, Test, Freq))
   fviz_cluster(km.res,TopGenes, ellipse.type = "norm", geom = c("point"), main ='10000Genes')
   
-  
+
 #Alluvial Plot
 library(ggalluvial)
 
 new <- data.frame(col_data$TissueType)
 alluvial_data <- cbind(alluvial_data, new)
-alluvial_data <- alluvial_data %>% rename("TissueType" = "col_data.TissueType")
+alluvial_data <- alluvial_data %>% rename("col_data.TissueType" = "TissueType")
 
-is_alluvia_form(as.data.frame(alluvial_data), axes = 1:5, silent = TRUE)
+alluvial_data$Sample <- row.names(alluvial_data)
+
+is_alluvia_form(as.data.frame(alluvial_data))
+is_alluvia_form(as.data.frame(a_data))
 head(as.data.frame(alluvial_data))
-#  geom_alluvium(aes(fill = TissueType), width = 1/12) +
 
 #gg plot
-ggplot(as.data.frame(alluvial_data),
-       aes( y = 110, axis1 = '10Genes', axis2 = '100Genes', axis3 = '1000Genes', axis4 = '10000Genes')) +
-  geom_alluvium(aes(fill = TissueType)) +
-  geom_stratum(aes(), width = 1/12, fill = "black", color = "grey") +
+ggplot(data = a_data,
+       aes(y = Freq, axis1 = 'Test', axis2 = "TissueType"))+
+  geom_alluvium(aes(fill = TissueType),width = 1/12) +
+  geom_stratum(width = 1/4, fill = "black", color = "grey") +
   geom_label(stat = "stratum", aes(label = after_stat(stratum))) +
-  scale_x_discrete(limits = c("10Genes", "100Genes", "1000Genes", "10000Genes"), expand = c(.05, .05)) +
+  scale_x_discrete(limits = c("TissueType"), expand = c(.05, .05)) +
+  xlab("Group Membership")
   scale_fill_brewer(type = "qual", palette = "Set2") +
   ggtitle("Gene Cluster Membership")
-
 
 
 
@@ -205,12 +233,12 @@ sig_deseq <- deseq_df[deseq_df$pvalue < 0.001, ]
 dds_matrix <- counts(dds[rownames(dds) %in% sig_deseq$Gene])
 
 # get z score values of matrix
-z_matrix <- t(apply(dds_matrix, 1, scale))
+z_matrix <- t(apply(Top5000Genes, 1, scale))
 
 #Heatmap of matrix, side map
 Heatmap(z_matrix, row_km = 5, 
         col = colorRamp2(c(-2, 0, 2), c("green", "white", "red")),
-        show_column_names = FALSE, row_title = NULL, show_row_dend = FALSE)
+        show_column_names = FALSE,show_row_names = FALSE, row_title = NULL, show_row_dend = TRUE)
 
 Heatmap(col_data$TissueType, name = "sample groupings",
         top_annotation = HeatmapAnnotation(summary = anno_summary(height = unit(2, "cm"))),
