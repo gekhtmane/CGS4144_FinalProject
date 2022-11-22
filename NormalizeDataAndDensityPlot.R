@@ -256,4 +256,3 @@ y <- gseDO(geneList,
 head(y)
 write.table(y, file='gp2DOenrichment.tsv', quote=FALSE, sep='\t')
 end()       
- 
